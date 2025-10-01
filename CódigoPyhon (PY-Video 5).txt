@@ -1,0 +1,58 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+excel_file='DatosRiesgoCredito.xlsx'
+
+BDCA=pd.read_excel(excel_file,sheet_name=0)
+BDCN=pd.read_excel(excel_file,sheet_name=1)
+
+#Comparamos las edades de los créditos aprobados y negados
+edada=BDCA['Edad'].astype(float)
+edadn=BDCN['Edad'].astype(float)
+
+qA=BDCA['Edad'].quantile([0,0.25,0.5,0.75,1.0])
+qB=BDCN['Edad'].quantile([0,0.25,0.5,0.75,1.0])
+np.corrcoef(qA,qB)
+
+datae=[edada,edadn]
+plt.boxplot(datae)
+
+#Ahora se procede a la selección de los individuos que poseen puntaje
+FPA=np.where(~np.isnan(BDCA['Puntaje']))
+FPN=np.where(~np.isnan(BDCN['Puntaje']))
+
+BDA=np.array(BDCA.iloc[FPA])
+BDN=np.array(BDCN.iloc[FPN])
+
+XP=np.vstack((BDA,BDN))
+X=np.array([XP[:,1],XP[:,4],XP[:,5],XP[:,6],XP[:,9],XP[:,10],XP[:,12],XP[:,13],XP[:,14],XP[:,21]])
+XM=np.array(X.astype(float))
+
+np.array(np.corrcoef(XM))
+np.array(np.cov(XM))
+
+#Calcular la covarianza entre dos variables
+sum=0
+for i in range(0,len(X[1,:])):
+  sum=sum+((XM[1,i]-np.mean(XM[1,:]))*(XM[2,i]-np.mean(XM[2,:])))
+
+print(sum/(len(X[1,:])-1))
+
+#Calcular el coeficiente de correlación
+sum=0; sd1=0; sd2=0
+for i in range(0,len(X[1,:])):
+  sum=sum+((XM[1,i]-np.mean(XM[1,:]))*(XM[2,i]-np.mean(XM[2,:])))
+  sd1=sd1+np.power((XM[1,i]-np.mean(XM[1,:])),2)
+  sd2=sd2+np.power((XM[2,i]-np.mean(XM[2,:])),2)
+
+num=sum/(len(X[1,:])-1)
+sd1=np.sqrt(sd1/(len(X[1,:])-1))
+sd2=np.sqrt(sd2/(len(X[2,:])-1))
+
+print(num/(sd1*sd2))
+
+
+
+
+
