@@ -1,0 +1,94 @@
+#Paso 1: Se cargan los datos necesarios
+import pandas as pd
+import numpy as np 
+import matplotlib.pyplot as plt
+
+excel_file='DatosRiesgoCredito.xlsx'
+
+BDA=pd.read_excel(excel_file,sheet_name=0)
+BDN=pd.read_excel(excel_file,sheet_name=1)
+BDA.head()
+print(BDA)
+print(BDN)
+
+#Paso 2: Se procede con la clusterización de las variables numéricas
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
+
+BD1=np.array([BDA['Edad'],BDA['Hijos'],BDA['Perscargo'],BDA['Nivel Renta'],BDA['Ingresos (U$)'],BDA['Egresos (U$)']])
+BD1=np.transpose(BD1)
+
+#Sacar el histograma de las variables de un array
+kmeans=KMeans(n_clusters=5).fit(BD1)
+centroids=kmeans.cluster_centers_
+
+print(ndatos)
+print(centroids)
+
+centroidsn=normalize(centroids,axis=0,norm='max')
+print(datan)
+
+df = pd.DataFrame({"Edad": centroidsn[0,:], "Hijos": centroidsn[1,:],"Nivel Renta": centroidsn[2,:],'Ingresos (U$)': centroidsn[3,:],'Egresos (U$)': centroidsn[4,:]})
+df.head()
+print(df)
+
+#Paso 3: Se determina la pertenencia de cada dato a cada clsuter
+dist=np.zeros((5,1))
+ND_S=np.zeros((5,1))
+CL=np.zeros((5,1))
+sw=0  #Switch de semilla, lanza una alerta cuando un dato pertenece a una semilla
+
+for ed1 in BD1:
+  dist=np.array(np.power((centroids-ed1),2))
+  sw=np.where(dist==np.amin(dist))[0]
+  ND_S[sw]=ND_S[sw]+1
+
+print(ND_S)
+ND_S2=np.transpose(ND_S)
+print(ND_S2)
+
+#Paso 4: Se procede con la creación del gráfico de araña
+#Se crea el gráfico de araña
+angles = np.linspace(0, 2 * np.pi, 5, endpoint=False)
+
+# Se repite el primer valor para cerrar el gráfico
+labels=['Edad', 'Hijos', 'Nivel Renta', 'Ingresos']
+angles=np.concatenate((angles, [angles[0]]))
+values=np.concatenate((ND_S2[0,:], [ND_S2[0,0]]))
+plt.polar(angles, values, 'o-', linewidth=2)
+plt.fill(angles, values, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels) 
+plt.show()
+
+#Paso 5: Se procede con el gráfico de los clusters asociados a la base de datos
+#Se crea el gráfico de araña
+angles = np.linspace(0, 2 * np.pi, 6, endpoint=False)
+values = np.random.random(6)
+
+# Se repite el primer valor para cerrar el gráfico
+angles=np.concatenate((angles, [angles[0]]))
+values=np.concatenate((centroidsn[0,:], [centroidsn[0,0]]))
+values2=np.concatenate((centroidsn[1,:], [centroidsn[1,0]]))
+values3=np.concatenate((centroidsn[2,:], [centroidsn[2,0]]))
+values4=np.concatenate((centroidsn[3,:], [centroidsn[3,0]]))
+values5=np.concatenate((centroidsn[4,:], [centroidsn[4,0]]))
+#print(angles.reshape(1,12))
+labels=['Edad', 'Hijos', 'Nivel Renta', 'Ingresos', 'Egresos']
+
+# Representación del mapa de calor
+plt.polar(angles, values, 'o-', linewidth=2)
+plt.fill(angles, values, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels)
+plt.polar(angles, values2, 'o-', linewidth=2)
+plt.fill(angles, values2, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels) 
+plt.polar(angles, values3, 'o-', linewidth=2)
+plt.fill(angles, values3, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels) 
+plt.polar(angles, values4, 'o-', linewidth=2)
+plt.fill(angles, values4, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels) 
+plt.polar(angles, values5, 'o-', linewidth=2)
+plt.fill(angles, values5, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels) 
+plt.show()
