@@ -1,0 +1,37 @@
+#Paso 1: Ahora calculamos el valor esperado para la media
+#y para la varianza
+MC2=np.zeros((10,1))
+C1=np.array(count).reshape(10,1)
+
+for i in range(10):
+  print(i)
+  MC2[i]=(MC[i+1]+MC[i])/2
+  print(MC2[i])
+
+E_u=np.sum(MC2*C1)/np.sum(C1)
+MCVar=np.array(np.power((MC2-E_u),2))
+E_v=np.sum(MCVar*C1)/np.sum(C1)
+print(E_v)
+
+#Paso 2: Buscamos los outliers teniendo en cuenta el 95% 
+#de los datos o los datos que se ubican en las colas
+E_sd=np.sqrt(E_v)
+print(E_sd)
+
+outl1=np.where((edads<=E_u-2*E_sd) & (edads>=E_u+2*E_sd))
+print(outl1[0])
+
+#Paso 3: Determinamos los outliers teniendo en cuenta
+#la estructura del gráfico boxplot
+import matplotlib.pyplot as plt
+
+q=np.quantile(edads,[0,0.25,0.5,0.75,1])
+plt.boxplot(edads,vert=False)
+IQ=q[3]-q[1]
+
+outl2=np.where((edads<=E_u-1.5*IQ) | (edads>=E_u+1.5*IQ))
+print(outl2[0])
+NF=outl2[0]
+print(NF)
+edads2=edads[NF]
+edads.round(1)
