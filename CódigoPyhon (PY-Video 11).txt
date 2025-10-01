@@ -1,0 +1,159 @@
+1. Se procede con la carga de los datos
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+excel_file='DatosRiesgoCredito.xlsx'
+
+BDCA=pd.read_excel(excel_file,sheet_name=0)  #Matriz de créditos aprobados. 
+BDCN=pd.read_excel(excel_file,sheet_name=1)  #Matriz de créditos negados.
+
+FPA=np.where(~np.isnan(BDCA['Puntaje']))
+FPN=np.where(~np.isnan(BDCN['Puntaje']))
+
+BDA=np.array(BDCA.iloc[FPA])
+BDN=np.array(BDCN.iloc[FPN])
+
+XP=np.vstack((BDA,BDN))
+
+2. Selección de los datos, las columnas y las variables para la construcción del modelo.
+from sklearn.preprocessing import normalize
+import seaborn as sns
+
+XP1=np.array([XP[:,1],XP[:,4],XP[:,5],XP[:,6],XP[:,9],XP[:,10],XP[:,12],XP[:,13],XP[:,14],XP[:,21]])
+XP2=np.array(XP1.astype(float))
+XP2=np.transpose(XP2)
+
+X=normalize(XP2,axis=0,norm='max')
+df=pd.DataFrame(X,columns=["Edad","Hijos","PersCargo","Estrato","Ingresos","Egresos","Monto","Plazo","Cuota","Puntaje"])
+df.head()
+
+3. Aquí se hará la implementación del modelo Neuronal Autoencoder
+#0. Se crean los pesos para el modelo neuronal
+from random import random
+
+NC=2 #Número de capas
+
+for i2 in range(NC):
+
+  if i2==0:
+
+    NE=9; ND=217; NO=8; NIT=1000;NS=9 
+    C=np.random.random((NS,NO))  #Pesos de descompresión de la información
+    W=np.random.random((NO,NE))  #Pesos de compresión de la información
+    h=np.zeros((NO,1))
+    h1=np.zeros((ND,NO))
+
+    #1. Se cargan los datos para la configuración del modelo
+    XD=X[:,0:9]
+    yd=XD
+
+    #2. Se procede con el proceso feedforward
+    alfa=0.0001
+    ys=np.zeros((ND,NS)); ek=np.zeros((ND,NS))
+    ek2=np.zeros((NIT,1))
+
+  if i2==1:
+      NE=8; ND=217; NO=4; NIT=1000;NS=8 
+      C=np.random.random((NS,NO))  #Pesos de descompresión de la información
+      W=np.random.random((NO,NE))  #Pesos de compresión de la información
+      h=np.zeros((NO,1))
+      
+      #1. Se cargan los datos para la configuración del modelo
+      XD=h1
+      yd=XD
+      h2=np.zeros((ND,NO))
+      
+      #2. Se procede con el proceso feedforward
+      alfa=0.0001
+      ys=np.zeros((ND,NS)); ek=np.zeros((ND,NS))
+      ek2=np.zeros((NIT,1))
+
+#Configuración del modelo adaptación y aprendizaje 
+  for i1 in range(NIT):
+    ek2[i1,]=0
+
+    #Este ciclo repetitivo solamente recorre la tabla una sola vez
+    for k in range(ND):
+      h=np.dot(W,XD[k,:])  #Paso 1: Proceso Feedforward
+      ys[k,]=np.dot(C,h)
+      ek[k,]=yd[k,]-ys[k,]
+      ek2[i1,]=ek2[i1,]+0.5*np.power((np.sum(ek[k,])),2)
+      C=C+alfa*np.dot(ek[k,].reshape(NS,1),h.reshape(1,NO))	              
+      ek_C=np.dot(ek[k,:],C)
+      W=W+alfa*np.dot(ek_C.reshape(NO,1),XD[k,:].reshape(1,NE))
+
+  if i2==0:
+    for k in range(ND):
+      h=np.dot(W,XD[k,:])  #Paso 1: Proceso Feedforward
+      h1[k,:]=np.transpose(h)
+
+  if i2==1:
+    for k in range(ND):
+      h=np.dot(W,XD[k,:])  #Paso 1: Proceso Feedforward
+      h2[k,:]=np.transpose(h)
+
+  if i2==0:
+    W1=W
+
+  if i2==1:
+    W2=W
+      
+plt.figure()
+plt.plot(yd)
+plt.plot(ys)
+plt.show
+
+plt.figure()
+plt.plot(ek2)
+plt.show
+
+Xcor=np.zeros((NE,1))
+
+for i in range(NE):
+  Xcor[i,]=(np.corrcoef(XD[:,i],ys[:,i])[0,1])
+
+print(Xcor)
+
+4. Se calcula el valor de salida para la variable explicativa (puntaje).
+#0. Se crean los pesos para el modelo neuronal
+from random import random
+
+NE=9; ND=217; NIT=1000;NS=1
+C=np.random.random((NS,NO)) 
+
+#1. Se cargan los datos para la configuración del modelo
+XD=X[:,0:NE]
+yd=X[:,NE]
+
+#2. Se procede con el proceso feedforward
+alfa=0.0001
+ys=np.zeros((ND,NS)); ek=np.zeros((ND,NS))
+ek2=np.zeros((NIT,1))
+
+#Configuración del modelo adaptación y aprendizaje 
+for i1 in range(NIT):
+  ek2[i1,]=0
+
+  #Este ciclo repetitivo solamente recorre la tabla una sola vez
+  for k in range(ND):
+    h1=np.dot(W1,XD[k,:])  #Paso 1: Proceso Feedforward
+    h2=np.dot(W2,h1)
+    ys[k,]=np.dot(C,h2)
+    ek[k,]=yd[k,]-ys[k,]
+    ek2[i1,]=ek2[i1,]+0.5*np.power((np.sum(ek[k,])),2)
+    C=C+alfa*np.dot(ek[k,].reshape(NS,1),h.reshape(1,NO))	              
+      
+
+plt.figure()
+plt.plot(yd)
+plt.plot(ys)
+plt.show
+
+plt.figure()
+plt.plot(ek2)
+plt.show
+
+XM=np.column_stack((yd,ys))
+df1=pd.DataFrame(XM,columns=['yd','ys'])
+df1.corr()
