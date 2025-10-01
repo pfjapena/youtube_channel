@@ -1,0 +1,79 @@
+1. Carga y procesamiento de los datos
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+excel_file='DatosRiesgoCredito.xlsx'
+
+BDCA=pd.read_excel(excel_file,sheet_name=0)
+BDCN=pd.read_excel(excel_file,sheet_name=1)
+
+#Ahora se procede a la selección de los individuos que poseen puntaje
+FPA=np.where(~np.isnan(BDCA['Puntaje']))
+FPN=np.where(~np.isnan(BDCN['Puntaje']))
+
+BDA=np.array(BDCA.iloc[FPA])
+BDN=np.array(BDCN.iloc[FPN])
+
+XP=np.vstack((BDA,BDN))
+XP1=np.array([XP[:,1],XP[:,4],XP[:,5],XP[:,6],XP[:,9],XP[:,10],XP[:,12],XP[:,13],XP[:,14],XP[:,21]])
+XP2=np.array(XP1.astype(float))
+XP2=np.transpose(XP2)
+print(XP2)
+
+#Para normalizar los datos de un array por columnas
+from sklearn.preprocessing import normalize 
+import seaborn as sns
+
+X = normalize(XP2, axis=0, norm='max') 
+print(X)
+
+df=pd.DataFrame(X,columns=["Edad","Hijos","PersCargo","Estrato","Ingresos","Egresos","Monto","Plazo","Cuota","Puntaje"])
+df.head()
+
+2. Se procede con el diseño del modelo neuronal en Keras
+pip install --upgrade tensorflow
+python -c "import tensorflow as tf;print(tf.reduce_sum(tf.random.normal([1000, 1000])))"
+
+from keras.models import Sequential
+from keras.layers import Dense
+
+XD=X[:,0:9]
+XD.shape
+yd=X[:,9]
+print(yd[0,])
+
+model=Sequential()
+
+model.add(Dense(10,activation='linear',use_bias=False,input_dim=NE))
+model.add(Dense(10,activation='linear',use_bias=False,input_dim=NE))
+model.add(Dense(10,activation='linear',use_bias=False,input_dim=NE))
+model.add(Dense(1))
+model.compile(optimizer='adam',loss='mse')
+history=model.fit(XD,yd,epochs=1000,batch_size=100,validation_data=(XD,yd),verbose=2)
+
+from numpy import linalg as LA
+
+network_prediction=model.predict(XD)
+Y_test=np.reshape(yd,(yd.shape[0],1))
+error=network_prediction-yd
+error_percentage=LA.norm(error,2)/LA.norm(yd,2)*100
+
+plt.figure()
+plt.plot(Y_test,'b',label='Real Output')
+plt.plot(network_prediction,'r',label='Predicted')
+plt.xlabel('time (k)')
+plt.ylabel('yd-ys')
+plt.legend()
+
+loss=history.history['loss']
+val_loss=history.history['val_loss']
+epochs=range(1,len(loss)+1)
+plt.figure()
+plt.plot(epochs,loss,'b',label='Training loss')
+plt.plot(epochs,val_loss,'r',label='Validation loss')
+plt.title('Training and validation losses')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.xscale('log')
+plt.legend()
