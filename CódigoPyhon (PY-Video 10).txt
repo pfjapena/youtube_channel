@@ -1,0 +1,78 @@
+#Se procede con la carga de los datos
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+excel_file='DatosRiesgoCredito.xlsx'
+
+BDCA=pd.read_excel(excel_file,sheet_name=0)
+BDCN=pd.read_excel(excel_file,sheet_name=1)
+
+#Ahora se procede a la selección de los individuos que poseen puntaje
+FPA=np.where(~np.isnan(BDCA['Puntaje']))
+FPN=np.where(~np.isnan(BDCN['Puntaje']))
+
+BDA=np.array(BDCA.iloc[FPA])
+BDN=np.array(BDCN.iloc[FPN])
+
+XP=np.vstack((BDA,BDN))
+XP1=np.array([XP[:,1],XP[:,4],XP[:,5],XP[:,6],XP[:,9],XP[:,10],XP[:,12],XP[:,13],XP[:,14],XP[:,21]])
+XP2=np.array(XP1.astype(float))
+XP2=np.transpose(XP2)
+print(XP2)
+
+#Para normalizar los datos de un array por columnas
+from sklearn.preprocessing import normalize 
+import seaborn as sns
+
+X = normalize(XP2, axis=0, norm='max') 
+print(X)
+df=pd.DataFrame(X,columns=["Edad","Hijos","PersCargo","Estrato","Ingresos","Egresos","Monto","Plazo","Cuota","Puntaje"])
+df.head()
+
+######################################################
+#Se procede con la construcción del modelo Autoencoder
+######################################################
+#0. Se crean los pesos para el modelo neuronal
+from random import random
+
+NE=9; ND=217;NO=10;NIT=2000;NS=9
+C=np.random.random((NS,NO))
+W=np.random.random((NO,NE))
+h=np.zeros((NO,1))
+
+XD=X[:,0:9]
+yd=XD
+alfa=0.01  #Se conoce como el factor de sobrerelajación
+ys=np.zeros((ND,NS)); ek=np.zeros((ND,NS)); ek2=np.zeros((NIT,1))
+
+for i1 in range(NIT):  #Este ciclo es para recorrer varias veces la tabla
+  ek2[i1,]=0
+
+  for k in range(ND):
+    h=np.dot(W,XD[k,:])  #1. Proceso Feedforward
+    ys[k,]=np.dot(C,h)
+    ek[k,]=yd[k,]-ys[k,]  #2. Proceso Backpropagation, recuperación del error
+    ek2[i1,]=ek2[i1,]+0.5*np.power((np.sum(ek[k,])),2)
+    C=C+alfa*np.dot(ek[k,].reshape(NS,1),h.reshape(1,NO))
+    ek_C=np.dot(ek[k,:].reshape(1,NS),C)
+    W=W+alfa*np.dot(ek_C.reshape(NO,1),XD[k,:].reshape(1,NE)) #ek[1,NS]*C[NS,NO]*XD[1,NE]
+
+C.shape
+h.shape
+
+plt.figure()
+plt.plot(yd)
+plt.plot(ys)
+plt.show
+
+plt.figure()
+plt.plot(ek2)
+plt.show
+
+(ek2[NIT-1,]/217)
+
+yd.size
+ys.size
+np.corrcoef(yd.reshape(ND,NS),ys)
+
