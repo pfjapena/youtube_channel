@@ -1,0 +1,91 @@
+#Se procede con la carga de los datos
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+excel_file='DatosRiesgoCredito.xlsx'
+
+BDCA=pd.read_excel(excel_file,sheet_name=0)
+BDCN=pd.read_excel(excel_file,sheet_name=1)
+
+#Ahora se procede a la selección de los individuos que poseen puntaje
+FPA=np.where(~np.isnan(BDCA['Puntaje']))
+FPN=np.where(~np.isnan(BDCN['Puntaje']))
+
+BDA=np.array(BDCA.iloc[FPA])
+BDN=np.array(BDCN.iloc[FPN])
+
+XP=np.vstack((BDA,BDN))
+XP1=np.array([XP[:,1],XP[:,4],XP[:,5],XP[:,6],XP[:,9],XP[:,10],XP[:,12],XP[:,13],XP[:,14],XP[:,21]])
+XP2=np.array(XP1.astype(float))
+XP2=np.transpose(XP2)
+print(XP2)
+
+#Para normalizar los datos de un array por columnas
+from sklearn.preprocessing import normalize 
+import seaborn as sns
+
+X = normalize(XP2, axis=0, norm='max') 
+print(X)
+df=pd.DataFrame(X,columns=["Edad","Hijos","PersCargo","Estrato","Ingresos","Egresos","Monto","Plazo","Cuota","Puntaje"])
+df.head()
+
+##################################################
+#Se procede con la construcción del modelo ADALINE
+##################################################
+#0. Se crean los pesos para el modelo neuronal
+from random import random
+
+NE=9; ND=216; NO=10; NIT=100
+C=np.random.random((NO,1))
+W=np.random.random((NO,NE))
+h=np.zeros((NO,1))
+print(C)
+print(W)
+
+#1. Se cargan los datos para la configuración del modelo
+XD=X[:,0:9]
+XD.shape
+yd=X[:,9]
+print(yd[0,])
+
+#2. Se procede con el proceso feedforward
+alfa=0.001
+ys=np.zeros((ND,1)); ek=np.zeros((ND,1))
+ek2=np.zeros((NIT,1))
+
+for i1 in range(NIT):
+   ek2[i1,]=0
+
+   
+#Configuración del modelo adaptación y aprendizaje 
+for i1 in range(NIT):
+  ek2[i1,]=0
+
+  #Este ciclo repetitivo solamente recorre la tabla una sola vez
+  for k in range(216):
+    h=np.dot(W,XD[k,:].reshape(NE,1))  #Paso 1: Proceso Feedforward
+    ys[k,]=np.dot(np.transpose(C),h)
+    ek[k,]=yd[k,]-ys[k,]
+    ek2[i1,]=ek2[i1,]+np.power((ek[k,]),2)
+    C=C+alfa*ek[k,]*h	
+    W=W+alfa*ek[k,]*(C*XD[k,:])
+
+plt.figure()
+plt.plot(yd)
+plt.plot(ys)
+plt.show
+
+plt.figure()
+plt.plot(ek2)
+plt.show
+
+
+
+a=np.dot(C.reshape(1,NO),W)
+df2=pd.DataFrame(a,columns=["Edad","Hijos","PersCargo","Estrato","Ingresos","Egresos","Monto","Plazo","Cuota"])
+df2.head()
+
+XM=np.column_stack((yd,ys))
+df1=pd.DataFrame(XM,columns=['yd','ys'])
+df1.corr()
