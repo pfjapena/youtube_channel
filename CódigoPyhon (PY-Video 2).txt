@@ -1,0 +1,39 @@
+#Paso 0: Se traen los datos del archivo de Excel
+import numpy as np
+
+BDCA0=pd.read_excel(excel_file,sheet_name=0)
+BDCA0.head()
+BDCA0.shape
+BDCA1=pd.read_excel(excel_file,sheet_name=1)
+BDCA1.head()
+BDCA1.shape
+
+edad0=BDCA0['Edad']
+edad1=BDCA1['Edad']
+
+print(edad1)
+
+edad=np.concatenate((edad0,edad1),axis=0)
+print(edad.shape)
+
+#Paso 1: Se procede al muestreo de la variable
+import random
+
+count, division=np.histogram(BDCA['Edad'])
+ND=np.array(np.sum(count))
+MC=np.array(division)
+CDF=np.array(np.cumsum(count/ND))
+
+edads=np.zeros((1000,1))
+
+for i in range(1000):
+  m1=random.uniform(0,0.999)
+  m2=random.uniform(-0.999,0.999)
+  sw=0
+
+  for m0 in CDF:
+    sw=sw+1
+    if m1<=m0:
+      edads[i]=MC[sw]+(dx/2)*m2
+      print('aleat: '+str(sw)+' Marca '+str(np.round(edads[i])))
+      break
