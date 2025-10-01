@@ -1,0 +1,36 @@
+import pandas as pd
+import numpy as np 
+import matplotlib.pyplot as plt
+
+excel_file='DatosMultidimensionales(PY-Video 5).xlsx'
+
+BD=pd.read_excel(excel_file,sheet_name=0)
+print(BD)
+
+axis=[ 0.2, 0.33266345,0.40205307,0.46720255,0.52768762,0.59688189,0.62851342,0.65993154,0.72505839,0.75947441, 1.0]
+ND_S1=BD['Sportage'].astype(float)
+ND_S2=BD['Rio'].astype(float)
+DataM=[ND_S1,ND_S2]
+DataM=np.array(DataM)
+
+print(DataM[1,:])
+
+#Se crea el gráfico de araña
+angles = np.linspace(0, 2 * np.pi, 12, endpoint=False)
+values = np.random.random(5)
+
+# Se repite el primer valor para cerrar el gráfico
+angles=np.concatenate((angles, [angles[0]]))
+values=np.concatenate((DataM[0,:], [DataM[0,0]]))
+values2=np.concatenate((DataM[1,:], [DataM[1,0]]))
+#print(angles.reshape(1,12))
+labels=['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre','Diciembre']
+
+# Representación del mapa de calor
+plt.polar(angles, values, 'o-', linewidth=2)
+plt.fill(angles, values, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels)
+plt.polar(angles, values2, 'o-', linewidth=2)
+plt.fill(angles, values2, alpha=0.25)
+plt.thetagrids(angles * 180 / np.pi, labels) 
+plt.show()
